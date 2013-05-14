@@ -163,3 +163,36 @@
   (d/entity
    (d/as-of our-db (:db/id delivery-tx))
    (:db/id our-user)))
+
+
+
+(deref
+  (d/transact
+   datomic-conn
+   [{:db/id (d/tempid :db.part/user)
+     :db/ident :inc
+     :db/fn (d/function '{:lang "clojure"
+                          :params [db eid attr num]
+                          :code (let [curr-entity (datomic.api/entity db eid)
+                                      curr-value (get curr-entity attr)
+                                      new-val (+ curr-value num)]
+                                  [[:db/add eid attr new-val]])})}
+    {:db/id #db/id[:db.part/db]
+     :db.install/_attribute :db.part/db
+     :db/ident :user/balance
+     :db/valueType :db.type/long
+     :db/cardinality :db.cardinality/one}]))
+
+(deref
+  (d/transact
+   datomic-conn
+   [[:db/add (:db/id our-user) :user/balance 100]]))
+
+(deref
+  (d/transact
+   datomic-conn
+   [[:inc (:db/id our-user) :user/balance 10]]))
+
+
+
+
